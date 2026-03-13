@@ -1,0 +1,212 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+\setlength{\parindent}{0pt}
+
+\title{Appy Health: An LLM-Based Conversational System for AI-Driven Patient--Provider Matching}
+
+\author{
+Keda Liu \\ Rice University \\ kl212@rice.edu
+\and
+Mengzhe Zhang \\ Rice University \\ mz106@rice.edu
+\and
+Ruiyang Zhou \\ Rice University \\ rz70@rice.edu
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Healthcare navigation is often challenging for patients due to difficulties in describing symptoms, understanding insurance networks, and identifying appropriate healthcare providers. This project presents \textit{Appy Health}, an AI-powered conversational system designed to guide patients through symptom reporting and automatically match them with suitable healthcare providers. The system integrates a large language model (LLM) with structured provider data to support symptom understanding, missing information detection, and provider recommendation. The prototype uses a React-based conversational interface, a FastAPI backend, and OpenAI GPT-4.1 for language reasoning. Provider matching is performed through hard constraints (e.g., specialty and insurance compatibility) and soft scoring factors (e.g., distance and availability). A synthetic dataset containing provider and patient scenarios was used to evaluate system behavior across multiple cases. Results demonstrate that the system can correctly guide patient conversations and produce clinically reasonable provider recommendations.
+\end{abstract}
+
+\section{Introduction}
+
+Navigating healthcare systems can be difficult for many patients. Individuals often struggle to clearly describe symptoms, determine which type of medical specialist they should consult, and identify providers who accept their insurance plans.
+
+Large language models (LLMs) create new opportunities for improving healthcare navigation through conversational interfaces. LLMs can interpret natural language symptom descriptions, extract structured information, and guide users through step-by-step interactions.
+
+In this project, we develop \textit{Appy Health}, a prototype conversational system that assists patients in identifying appropriate healthcare providers. The system collects symptom descriptions through dialogue, identifies missing information through follow-up questions, and performs provider matching using structured healthcare data.
+
+\section{Methods}
+
+\subsection{System Architecture}
+
+The Appy Health prototype follows a modular architecture that integrates a conversational interface, backend server, and AI reasoning engine. Figure~\ref{fig:architecture} illustrates the overall system architecture.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+node distance=1.4cm,
+box/.style={
+rectangle,
+draw,
+rounded corners,
+minimum width=3cm,
+minimum height=0.8cm,
+align=center
+},
+arrow/.style={->, thick}
+]
+
+\node (user) [box] {User};
+\node (frontend) [box, below=of user] {React Chat Interface};
+\node (backend) [box, below=of frontend] {FastAPI Backend};
+\node (gpt) [box, below=of backend] {GPT-4.1 API};
+\node (matching) [box, below=of gpt] {Matching Engine};
+\node (result) [box, below=of matching] {Provider Recommendation};
+
+\draw[arrow] (user) -- (frontend);
+\draw[arrow] (frontend) -- (backend);
+\draw[arrow] (backend) -- (gpt);
+\draw[arrow] (gpt) -- (matching);
+\draw[arrow] (matching) -- (result);
+
+\end{tikzpicture}
+
+\caption{System architecture.}
+\label{fig:architecture}
+\end{figure}
+
+The system contains three main components: a React-based conversational interface, a FastAPI backend server, and an LLM reasoning module powered by GPT-4.1.
+
+\subsection{Conversational Information Collection}
+
+The system collects structured medical information through guided conversation. Figure~\ref{fig:pipeline} shows the conversational pipeline.
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tikzpicture}[
+node distance=2.5cm,
+box/.style={rectangle, draw, rounded corners, minimum width=2.6cm, minimum height=1cm, align=center},
+arrow/.style={->, thick}
+]
+
+\node (symptom) [box] {User Symptom};
+\node (extract) [box, right=of symptom] {Information\\Extraction};
+\node (missing) [box, right=of extract] {Missing Data\\Detection};
+\node (question) [box, right=of missing] {Clarification\\Questions};
+\node (matching) [box, right=of question] {Provider\\Matching};
+
+\draw[arrow] (symptom) -- (extract);
+\draw[arrow] (extract) -- (missing);
+\draw[arrow] (missing) -- (question);
+\draw[arrow] (question) -- (matching);
+
+\end{tikzpicture}
+}
+
+\caption{Conversational pipeline.}
+\label{fig:pipeline}
+\end{figure}
+
+The workflow includes symptom description, information extraction, missing data detection, and clarification questions before provider matching.
+
+\subsection{Provider Matching Algorithm}
+
+Provider matching uses a two-stage filtering and ranking framework illustrated in Figure~\ref{fig:ranking}.
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tikzpicture}[
+node distance=2.5cm,
+box/.style={rectangle, draw, rounded corners, minimum width=2.6cm, minimum height=1cm, align=center},
+arrow/.style={->, thick}
+]
+
+\node (input) [box] {Patient\\Information};
+\node (hard) [box, right=of input] {Hard Constraints\\Filter};
+\node (candidate) [box, right=of hard] {Candidate\\Providers};
+\node (soft) [box, right=of candidate] {Soft\\Scoring};
+\node (topk) [box, right=of soft] {Top-3\\Providers};
+
+\draw[arrow] (input) -- (hard);
+\draw[arrow] (hard) -- (candidate);
+\draw[arrow] (candidate) -- (soft);
+\draw[arrow] (soft) -- (topk);
+
+\end{tikzpicture}
+}
+
+\caption{Provider ranking framework.}
+\label{fig:ranking}
+\end{figure}
+
+\subsection{Prototype User Interface}
+
+Figure~\ref{fig:ui} shows the prototype interface used for conversational symptom collection and profile completion.
+
+\begin{figure}[H]
+\centering
+
+\begin{subfigure}[t]{0.28\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{chat_ui.jpg}
+    \caption{Symptom collection.}
+\end{subfigure}
+\hspace{0.03\linewidth}
+\begin{subfigure}[t]{0.28\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{profile_ui.png}
+    \caption{Profile completion.}
+\end{subfigure}
+
+\caption{Prototype user interface.}
+\label{fig:ui}
+
+\end{figure}
+
+\subsection{Dataset}
+
+A synthetic dataset was created to simulate healthcare navigation scenarios. Provider attributes include specialty, treatments, insurance plans, languages, location, and availability.
+
+\section{Results}
+
+Five test scenarios were evaluated, including perfect matches, insurance relaxation, symptom-based specialty inference, no-match cases, and ranking differentiation.
+
+The system successfully handled all scenarios and produced reasonable provider recommendations.
+
+\section{Discussion}
+
+The Appy Health prototype demonstrates the feasibility of conversational AI for healthcare navigation. By combining natural language symptom collection with structured provider matching, the system can guide patients toward appropriate providers.
+
+Future work will integrate real provider datasets and implement the planned RAG-based retrieval framework.
+
+\section*{Acknowledgements}
+
+This project was developed as part of ELEC 594 at Rice University.
+
+\section*{CRediT Author Statement}
+
+\textbf{Keda Liu:} Conceptualization, Prompt Design.
+
+\textbf{Mengzhe Zhang:} Matching Algorithm Design, System Implementation.
+
+\textbf{Ruiyang Zhou:} System Testing, Prototype Development.
+
+\section*{Code Availability}
+
+\url{https://github.com/Winterslife/appy-health-demo}
+
+\section*{References}
+
+\begin{enumerate}
+\item OpenAI, ``GPT-4 Technical Report,'' 2023.
+\item J. Wei et al., ``Chain-of-Thought Prompting,'' NeurIPS 2022.
+\item Conversational AI for Healthcare Navigation, JMIR.
+\end{enumerate}
+
+\end{document}
